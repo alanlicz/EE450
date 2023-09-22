@@ -68,7 +68,7 @@ string divideMod2(string dividend, string divisor) {
             // part used in each step) is 0, the step cannot
             // use the regular divisor; we need to use an
             // all-0s divisor.
-            tmp = xor1(std::string(pick, '0'), tmp) + dividend[pick];
+            tmp = xor1(string(pick, '0'), tmp) + dividend[pick];
 
         // Increment pick to move further
         pick += 1;
@@ -80,7 +80,7 @@ string divideMod2(string dividend, string divisor) {
     if (tmp[0] == '1')
         tmp = xor1(divisor, tmp);
     else
-        tmp = xor1(std::string(pick, '0'), tmp);
+        tmp = xor1(string(pick, '0'), tmp);
 
     return tmp;
 }
@@ -146,7 +146,7 @@ string xorLeftAlign(const string& data, const string& error) {
 }
 
 // Calculate the parity bit for a binary string
-char parity(const std::string& s) {
+char parity(const string& s) {
     int count = 0;
     for (char c : s) {
         if (c == '1') {
@@ -179,27 +179,6 @@ void parityCheck(string data, string& rowParity, string& colParity) {
         rowParity += parity(blocks[i]);
     }
     rowParity += parity(colParity);
-
-    // Print the column and row parities
-    // cout << "Col: " << colParity << "; "
-    //      << "Row: " << rowParity << ";" << endl;
-
-    // // Check for errors in the received data
-    // string receivedData =
-    // "1000100101101001101001010111000111011010110101011001001000001100"; //
-    // example received data string receivedRowParity = receivedData.substr(64,
-    // 9); std::string receivedColParity; for (int i = 0; i < 8; i++) {
-    //     std::string col;
-    //     for (int j = 0; j < 8; j++) {
-    //         col += receivedData[i * 8 + j];
-    //     }
-    //     receivedColParity += parity(col);
-    // }
-    // if (receivedRowParity == rowParity && receivedColParity == colParity) {
-    //     std::cout << "No errors detected." << std::endl;
-    // } else {
-    //     std::cout << "Errors detected." << std::endl;
-    // }
 }
 
 int main() {
