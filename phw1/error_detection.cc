@@ -148,7 +148,7 @@ string xorLeftAlign(const string& data, const string& error) {
 // Calculate the parity bit for a binary string
 char parity(const string& s) {
     int count = 0;
-    for (char c : s) {
+    for (auto c : s) {
         if (c == '1') {
             count++;
         }
@@ -217,7 +217,7 @@ int main() {
 
             cout << "==========================\n";
             cout << "Data:" << data << "\n";
-            cout << "Error" << error << endl;
+            cout << "Error:" << error << endl;
 
             // CRC-8 x^8+x^5+x^4+1  1 0011 0001
             string key = "100110001";
