@@ -270,7 +270,5 @@ int main() {
 
     inputFile.close();
 
-    // cout << "Receive bits: " << receiveCode << endl;
-    // calculateChecksum(input);
     return 0;
 }
