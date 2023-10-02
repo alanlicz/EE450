@@ -9,6 +9,7 @@ bitset<8> calculateChecksum(string binaryInput) {
         return 0;
     }
 
+    11
     for (int i = 0; i < 64; i += 8) {
         string chunk = binaryInput.substr(i, 8);
         sum += bitset<8>(chunk).to_ulong();
