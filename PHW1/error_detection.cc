@@ -202,7 +202,6 @@ int main() {
             string codeword = data + binChecksum.to_string();
 
             // Introduce error
-            // cout << binChecksum << endl;
             bitset<72> codewordBits(codeword);
             bitset<72> errorBits(error);
             bitset<72> receiveCode = codewordBits ^ errorBits;
