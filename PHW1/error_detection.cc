@@ -1,5 +1,7 @@
 #include "error_detection.h"
 
+// Test bean
+
 // Calculate a one byte checksum
 bitset<8> calculateChecksum(string binaryInput) {
     int sum = 0, quotient = 0, remainder = 0, checksum = 0;
@@ -9,7 +11,6 @@ bitset<8> calculateChecksum(string binaryInput) {
         return 0;
     }
 
-    11
     for (int i = 0; i < 64; i += 8) {
         string chunk = binaryInput.substr(i, 8);
         sum += bitset<8>(chunk).to_ulong();
