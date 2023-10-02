@@ -182,11 +182,6 @@ void parityCheck(string data, string& rowParity, string& colParity) {
 }
 
 int main() {
-    // string input =
-    //     "1000100101101001101001010111000111011010110101011001001000001100";
-    // string errorData =
-    //     "0000000000000000000000000000000000000000000000000000000000000000000000"
-    //     "00";
     ifstream inputFile("data.txt");
     if (!inputFile.is_open()) {
         cerr << "Failed to open the file." << endl;
