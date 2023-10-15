@@ -106,8 +106,8 @@ int main() {
         if (child_pid == 0) {  // This is the child process
             close(server_fd);  // Close the parent socket in the child process
 
-            char buffer[4096] = {0};
-            read(new_socket, buffer, 4096);
+            char buffer[1024] = {0};
+            read(new_socket, buffer, 1024);
             string deptName(buffer);
             bool found = false;
             for (const auto &[key, value] : serverDepartments) {
