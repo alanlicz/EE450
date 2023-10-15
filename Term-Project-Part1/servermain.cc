@@ -29,8 +29,7 @@ int main() {
     // Display server boot up message
     cout << "Main server is up and running." << endl;
 
-    // Reading the text file and storing department info (assuming
-    // "department:ID" format for simplicity)
+    // Reading the text file and storing department info 
     map<int, set<string>> serverDepartments;  // for storing departments
                                               // for each server
     ifstream infile("list.txt");
@@ -45,6 +44,7 @@ int main() {
             string department;
             while (getline(ss, department,
                            ';')) {  // ';' delimiter for departments
+                // Build the map with the set type of value
                 serverDepartments[currentServerID].insert(department);
             }
         }
@@ -61,9 +61,11 @@ int main() {
     // Setting up the server socket
     int server_fd, new_socket;
     struct sockaddr_in address;
-    int opt = 1;
+    // SO_REUSEADDR allows reuse of local addresses
+    int opt = 1; 
     int addrlen = sizeof(address);
 
+    // Create socket file descriptor
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         cerr << "Socket creation failed." << endl;
         return 0;
@@ -93,23 +95,39 @@ int main() {
             return 0;
         }
 
-        char buffer[1024] = {0};
-        read(new_socket, buffer, 1024);
-        string deptName(buffer);
-        bool found = false;
-        for (const auto &[key, value] : serverDepartments) {
-            if (value.find(deptName) != value.end()) {
-                send(new_socket, to_string(key).c_str(),
-                     to_string(key).length(), 0);
-                close(new_socket);
-                found = true;
-                break;
-            }
+        // Fork a new process
+        pid_t child_pid = fork();
+
+        if (child_pid < 0) {
+            cerr << "Fork failed." << endl;
+            return 0;
         }
 
-        if (!found) {
-            send(new_socket, "Not found", 9, 0);
-            close(new_socket);
+        if (child_pid == 0) {  // This is the child process
+            close(server_fd);  // Close the parent socket in the child process
+
+            char buffer[4096] = {0};
+            read(new_socket, buffer, 4096);
+            string deptName(buffer);
+            bool found = false;
+            for (const auto &[key, value] : serverDepartments) {
+                if (value.find(deptName) != value.end()) {
+                    send(new_socket, to_string(key).c_str(),
+                         to_string(key).length(), 0);
+                    close(new_socket);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                send(new_socket, "Not found", 9, 0);
+                close(new_socket);
+            }
+
+            exit(0);  // Terminate the child process after handling the request
+        } else {      // This is the parent process
+            close(new_socket);  // Close the new socket in the parent process
         }
     }
 
