@@ -23,7 +23,7 @@ using std::string;
 using std::stringstream;
 using std::to_string;
 
-#define SERVER_PORT 8080
+#define SERVER_PORT 23675
 
 int main() {
     // Display server boot up message
@@ -50,7 +50,7 @@ int main() {
         }
     }
     cout << "Main server has read the department list from list.txt." << endl;
-    cout << "Total number of Backend Servers :" << serverDepartments.size()
+    cout << "Total number of Backend Servers: " << serverDepartments.size()
          << endl;
     for (auto it = serverDepartments.begin(); it != serverDepartments.end();
          ++it) {
@@ -84,7 +84,7 @@ int main() {
         return 0;
     }
 
-    cout << "Main server is up and running on port " << SERVER_PORT << endl;
+    // cout << "Main server is up and running on port " << SERVER_PORT << endl;
 
     while (true) {
         if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
@@ -96,25 +96,6 @@ int main() {
         char buffer[1024] = {0};
         read(new_socket, buffer, 1024);
         string deptName(buffer);
-        // for (const auto &[key, value] : serverDepartments) {
-        //     if (value.find(deptName) != value.end()) {
-        //         send(new_socket, to_string(key).c_str(),
-        //              to_string(key).length(), 0);
-        //         close(new_socket);
-        //         break;
-        //     } else {
-        //         send(new_socket, "Not found", 9, 0);
-        //         close(new_socket);
-        //     }
-        // }
-
-        // if (serverDepartments.find(deptName) != departments.end()) {
-        //     send(new_socket, departments[deptName].c_str(),
-        //          departments[deptName].length(), 0);
-        // } else {
-        //     send(new_socket, "Not found", 9, 0);
-        // }
-
         bool found = false;
         for (const auto &[key, value] : serverDepartments) {
             if (value.find(deptName) != value.end()) {

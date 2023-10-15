@@ -6,21 +6,27 @@
 
 #include <iostream>
 
-#define SERVER_PORT 8080
+using std::cerr;
+using std::cin;
+using std::cout;
+using std::endl;
+using std::string;
+
+#define SERVER_PORT 23675
 
 int main() {
     // Display client boot up message
-    std::cout << "Client is up and running." << std::endl;
+    cout << "Client is up and running." << std::endl;
 
-    std::cout << "Enter Department Name: ";
-    std::string deptName;
-    std::cin >> deptName;
+    cout << "Enter Department Name: ";
+    string deptName;
+    cin >> deptName;
 
     int sock = 0;
     struct sockaddr_in serv_addr;
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        std::cerr << "Socket creation error." << std::endl;
+        cerr << "Socket creation error." << endl;
         return 0;
     }
 
@@ -28,20 +34,27 @@ int main() {
     serv_addr.sin_port = htons(SERVER_PORT);
 
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
-        std::cerr << "Invalid address or address not supported." << std::endl;
+        cerr << "Invalid address or address not supported." << endl;
         return 0;
     }
 
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        std::cerr << "Connection failed." << std::endl;
+        cerr << "Connection failed." << endl;
         return 0;
     }
 
     send(sock, deptName.c_str(), deptName.length(), 0);
+    cout << "Client has sent Department " << deptName
+         << " to Main Server using TCP" << endl;
     char buffer[1024] = {0};
     read(sock, buffer, 1024);
-    std::cout << "Received Backend server ID for " << deptName << ": " << buffer
-              << std::endl;
+    // cout << "Data from server" << buffer << endl;
+    if (strcmp(buffer, "Not found") == 0) {
+        cout << deptName << " not found." << endl;
+    } else {
+        cout << "Client has received results from Main server: " << deptName
+             << " is associated with backend server " << buffer << endl;
+    }
 
     close(sock);
     return 0;
