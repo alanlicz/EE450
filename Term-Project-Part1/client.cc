@@ -13,6 +13,7 @@ using std::endl;
 using std::string;
 
 #define SERVER_PORT 23675
+#define SERVER_IP "127.0.0.1"  // localhost
 
 int main() {
     // Display client boot up message
@@ -34,7 +35,7 @@ int main() {
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_port = htons(SERVER_PORT);
 
-        if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+        if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
             cerr << "Invalid address or address not supported." << endl;
             return 0;
         }
@@ -57,6 +58,7 @@ int main() {
             cout << "Client has received results from Main server: " << deptName
                  << " is associated with backend server " << buffer << endl;
         }
+        cout << "-----Start a new query-----" << endl;
 
         close(sock);
     }
