@@ -1,4 +1,7 @@
 #include <netinet/in.h>
+#include <signal.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <sys/socket.h>
 #include <unistd.h>  // for close
 
@@ -25,13 +28,27 @@ using std::stringstream;
 using std::to_string;
 
 #define SERVER_PORT 23675
+#define SHM_KEY 1234
+#define SHM_SIZE sizeof(int)
+
+int shmid;
+
+void cleanup(int signum) {
+    int result = shmctl(shmid, IPC_RMID, NULL);
+    if (result == -1) {
+        cerr << "Error removing shared memory: " << strerror(errno) << endl;
+        cerr << "Error number: " << errno << endl;
+    } else {
+        cerr << "Shared memory removed successfully." << endl;
+    }
+    cerr << "Cleanup function called due to signal " << signum << endl;
+    exit(signum);
+}
 
 int main() {
+    signal(SIGINT, cleanup);  // register signal handler for SIGINT
     // Display server boot up message
     cout << "Main server is up and running." << endl;
-
-    // Create a map to store client IDs and their sockets
-    map<int, int> clientSockets;
 
     // Reading the text file and storing department info
     map<int, set<string>> serverDepartments;  // for storing departments
@@ -82,7 +99,7 @@ int main() {
         htons(SERVER_PORT);  // Convert port num to network byte order
 
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        cerr << "Bind failed." << endl;
+        cerr << "Bind failed: " << strerror(errno) << endl;
         return 0;
     }
     if (listen(server_fd, 3) < 0) {
@@ -111,15 +128,28 @@ int main() {
             close(server_fd);  // Close the parent socket in the child process
 
             char buffer[1024] = {0};
-            read(new_socket, buffer, 1024);
-            string deptName(buffer);
+            // read(new_socket, buffer, 1024);
+            // string deptName(buffer);
+            int valRead = read(new_socket, buffer, 1024);
+            string message(buffer, valRead);
+            size_t pos = message.find(';');
+            string deptName;
+            if (pos != string::npos) {
+                deptName = message.substr(0, pos);
+                int clientID = stoi(message.substr(pos + 1));
+                cout << "Department name: " << deptName << endl;
+                cout << "Client ID: " << clientID << endl;
+            } else {
+                cerr << "Invalid message format" << endl;
+            }
+
             bool found = false;
 
             for (const auto &[key, value] : serverDepartments) {
                 if (value.find(deptName) != value.end()) {
                     send(new_socket, to_string(key).c_str(),
                          to_string(key).length(), 0);
-                    cout << deptName << "shows up in backend server " << key
+                    cout << deptName << " shows up in backend server " << key
                          << endl;
                     // // Send client ID to client
                     // send(new_socket, to_string(clientID).c_str(),
