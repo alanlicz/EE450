@@ -17,7 +17,7 @@ using std::string;
 
 int main() {
     // Display client boot up message
-    cout << "Client is up and running." << std::endl;
+    cout << "Client is up and running." << endl;
 
     while (true) {
         cout << "Enter Department Name: ";

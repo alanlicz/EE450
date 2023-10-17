@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <unistd.h>  // for close
 
+#include <atomic>
 #include <cctype>
 #include <cstring>  // for memset
 #include <fstream>
@@ -29,7 +30,10 @@ int main() {
     // Display server boot up message
     cout << "Main server is up and running." << endl;
 
-    // Reading the text file and storing department info 
+    // Create a map to store client IDs and their sockets
+    map<int, int> clientSockets;
+
+    // Reading the text file and storing department info
     map<int, set<string>> serverDepartments;  // for storing departments
                                               // for each server
     ifstream infile("list.txt");
@@ -62,7 +66,7 @@ int main() {
     int server_fd, new_socket;
     struct sockaddr_in address;
     // SO_REUSEADDR allows reuse of local addresses
-    int opt = 1; 
+    int opt = 1;
     int addrlen = sizeof(address);
 
     // Create socket file descriptor
@@ -110,10 +114,17 @@ int main() {
             read(new_socket, buffer, 1024);
             string deptName(buffer);
             bool found = false;
+
             for (const auto &[key, value] : serverDepartments) {
                 if (value.find(deptName) != value.end()) {
                     send(new_socket, to_string(key).c_str(),
                          to_string(key).length(), 0);
+                    cout << deptName << "shows up in backend server " << key
+                         << endl;
+                    // // Send client ID to client
+                    // send(new_socket, to_string(clientID).c_str(),
+                    //      to_string(clientID).length(), 0);
+                    shutdown(new_socket, SHUT_RDWR);  // shutdown the socket
                     close(new_socket);
                     found = true;
                     break;
@@ -121,7 +132,19 @@ int main() {
             }
 
             if (!found) {
+                cout << deptName << " does not show up in backend server ";
+                bool first = true;
+                for (const auto &[key, value] : serverDepartments) {
+                    if (!first) {
+                        cout << ", ";
+                    }
+                    cout << key;
+                    first = false;
+                }
+                cout << endl;
                 send(new_socket, "Not found", 9, 0);
+
+                shutdown(new_socket, SHUT_RDWR);  // shutdown the socket
                 close(new_socket);
             }
 
