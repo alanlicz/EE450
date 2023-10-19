@@ -76,7 +76,7 @@ int main() {
     for (auto it = serverDepartments.begin(); it != serverDepartments.end();
          ++it) {
         cout << "Backend Server " << it->first << " contains "
-             << it->second.size() << " distinct departments." << endl;
+             << it->second.size() << " distinct departments" << endl;
     }
 
     // Setting up the server socket
@@ -107,8 +107,6 @@ int main() {
         return 0;
     }
 
-    // cout << "Main server is up and running on port " << SERVER_PORT << endl;
-
     while (true) {
         if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
                                  (socklen_t *)&addrlen)) < 0) {
@@ -126,22 +124,22 @@ int main() {
 
         if (child_pid == 0) {  // This is the child process
             close(server_fd);  // Close the parent socket in the child process
-
             char buffer[1024] = {0};
-            // read(new_socket, buffer, 1024);
-            // string deptName(buffer);
-            int valRead = read(new_socket, buffer, 1024);
+            int valRead = recv(new_socket, buffer, sizeof(buffer), 0);
             string message(buffer, valRead);
             size_t pos = message.find(';');
             string deptName;
+            int clientID;
             if (pos != string::npos) {
                 deptName = message.substr(0, pos);
-                int clientID = stoi(message.substr(pos + 1));
-                cout << "Department name: " << deptName << endl;
-                cout << "Client ID: " << clientID << endl;
+                clientID = stoi(message.substr(pos + 1));
             } else {
                 cerr << "Invalid message format" << endl;
             }
+
+            cout << "Main server has received the request on Department "
+                 << deptName << " from client " << clientID
+                 << " using TCP over port " << SERVER_PORT << endl;
 
             bool found = false;
 
@@ -151,9 +149,10 @@ int main() {
                          to_string(key).length(), 0);
                     cout << deptName << " shows up in backend server " << key
                          << endl;
-                    // // Send client ID to client
-                    // send(new_socket, to_string(clientID).c_str(),
-                    //      to_string(clientID).length(), 0);
+                    cout << "Main Server has sent searching result to client "
+                         << clientID << " using TCP over port " << SERVER_PORT
+                         << endl;
+
                     shutdown(new_socket, SHUT_RDWR);  // shutdown the socket
                     close(new_socket);
                     found = true;
@@ -172,6 +171,10 @@ int main() {
                     first = false;
                 }
                 cout << endl;
+                cout << "The Main Server has sent “Department Name: Not found” "
+                        "to client"
+                     << clientID << " using TCP over port " << SERVER_PORT
+                     << endl;
                 send(new_socket, "Not found", 9, 0);
 
                 shutdown(new_socket, SHUT_RDWR);  // shutdown the socket

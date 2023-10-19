@@ -73,20 +73,20 @@ int main() {
         string message = deptName + ";" + to_string(clientID);
         send(sock, message.c_str(), message.length(), 0);
         cout << "Client has sent Department " << deptName
-             << " to Main Server using TCP" << endl;
+             << " to Main Server using TCP." << endl;
         char buffer[1024] = {0};
         read(sock, buffer, 1024);
 
         if (strcmp(buffer, "Not found") == 0) {
             cout << deptName << " not found." << endl;
         } else {
-            cout << "Client has received results from Main server: " << deptName
-                 << " is associated with backend server " << buffer << endl;
+            cout << "Client has received results from Main Server: " << deptName
+                 << " is associated with backend server " << buffer << "." << endl;
         }
         cout << "-----Start a new query-----" << endl;
 
         close(sock);
-        cout << "Client ID: " << clientID << endl;  // print the client ID
+        // cout << "Client ID: " << clientID << endl;  // print the client ID
     }
 
     return 0;
