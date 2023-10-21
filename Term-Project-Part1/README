@@ -1,0 +1,8 @@
+Tianyang Li
+2364211675
+22.04.3 LTS
+I followed the BeeJ tutorial and finished a socket programming assignment
+My code files are servermain.cc and client.cc. The makefile is Makefile. Servermain.cc can handle multiple clients at the same time. Client.cc can send and receive messages from server. I also wrote a makefile to compile the program.
+I put all the messages inside a buffer and send them to the server. Different information such as clientID and department names will be separated by semicolon
+I haven't found any
+No
