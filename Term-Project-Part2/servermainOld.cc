@@ -47,8 +47,7 @@ using std::to_string;
 //     exit(signum);
 // }
 
-
-void readDataFiles(){}
+void readDataFiles() {}
 
 int main() {
     // ! This is not used in the final version
@@ -77,7 +76,6 @@ int main() {
             }
         }
     }
-
 
     cout << "Main server has read the department list from list.txt." << endl;
     cout << "Total number of Backend Servers: " << serverDepartments.size()

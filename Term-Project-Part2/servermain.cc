@@ -1,3 +1,8 @@
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -10,6 +15,7 @@ using std::endl;
 using std::getline;
 using std::ifstream;
 using std::map;
+using std::memset;
 using std::string;
 using std::vector;
 
@@ -33,6 +39,30 @@ int main() {
          << SERVER_PORT << endl;
 
     printDepartmentsByServer(department_backend_mapping);
+
+    int server_fd;
+    struct sockaddr_in server_addr, client_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    memset(&client_addr, 0, sizeof(client_addr));
+
+    // Create socket
+    if ((server_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        cerr << "socket creation failed";
+        return 1;
+    }
+
+    // Filling server information
+    server_addr.sin_family = AF_INET;  // IPv4
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(SERVER_PORT);
+
+    // Bind the socket with the server address
+    if (bind(server_fd, (const struct sockaddr*)&server_addr,
+             sizeof(server_addr)) < 0) {
+        cerr << "Bind failed: " << strerror(errno) << endl;
+        close(server_fd);
+        return 1;
+    }
 }
 
 void readDataFiles(const vector<string>& filenames,
