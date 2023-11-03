@@ -1,77 +1,79 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <cstring>
+#include <fstream>
 #include <iostream>
+#include <map>
+#include <string>
+#include <vector>
 
 using std::cerr;
-using std::cin;
 using std::cout;
 using std::endl;
+using std::ifstream;
+using std::map;
 using std::string;
+using std::to_string;
+using std::vector;
 
-#define SERVER_PORT 30675
-#define CLIENT_PORT 33675
-#define SERVER_IP "127.0.0.1"  // Use the appropriate IP address for the server
+const int PORT = 30675;
+const int SERVER_PORT = 33675;
+const char* SERVER_IP = "127.0.0.1";
+#define FILENAME "dataA.txt"
+#define CLIENT_NAME "Client A"
+
+void readAndPrint();  // Read dataA.txt and print to stdout
 
 int main() {
-    int sock = 0, val_read;
-    struct sockaddr_in serv_addr, client_addr;
-
-    // Create a socket
-    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        cerr << "Socket creation error" << endl;
-        return -1;
+    // readAndPrint();
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        cerr << "Error opening socket" << endl;
+        exit(1);
     }
 
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    memset(&client_addr, 0, sizeof(client_addr));
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
 
-    // Filling server information
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(CLIENT_PORT);
-    serv_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
+    int message;
+    socklen_t server_len = sizeof(server_addr);
+    int n = recvfrom(sockfd, &message, sizeof(message), 0,
+                     (struct sockaddr*)&server_addr, &server_len);
 
-    // Bind client socket to the server port
-    client_addr.sin_family = AF_INET;
-    client_addr.sin_port = htons(SERVER_PORT);
-    client_addr.sin_addr.s_addr = INADDR_ANY;
+    const char* department = "ECE Art Law";
+    sendto(sockfd, department, strlen(department), 0,
+           (struct sockaddr*)&server_addr, sizeof(server_addr));
 
-    // Convert IPv4 addresses from text to binary form
-    if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
-        cerr << "Invalid address/ Address not supported" << endl;
-        return -1;
+    std::cout << "Client A sent: " << message << std::endl;
+
+    if (n > 0) {
+        // Convert the integer from network byte order to host byte order
+        message = ntohl(message);
+        cout << CLIENT_NAME << " received int: " << message << endl;
     }
 
-    char buffer[1024] = {0};
-    string userInput;
-
-    // Allow the user to type a message
-    cout << "Enter message: ";
-    getline(cin, userInput);
-
-    // Send the message to the server
-    sendto(sock, userInput.c_str(), userInput.size(), 0,
-           (const struct sockaddr*)&serv_addr, sizeof(serv_addr));
-    cout << "Message sent to server: " << userInput << endl;
-
-    // Optionally receive a reply from the server
-    struct sockaddr_in from;
-    socklen_t fromLength = sizeof(struct sockaddr_in);
-    val_read =
-        recvfrom(sock, buffer, 1024, 0, (struct sockaddr*)&from, &fromLength);
-    if (val_read > 0) {
-        buffer[val_read] = '\0';
-        cout << "Server's reply: " << buffer << endl;
-    } else {
-        cout << "No reply received from server." << endl;
-    }
-
-    // Close the socket
-    close(sock);
+    close(sockfd);
     return 0;
+}
+
+void readAndPrint() {
+    ifstream file(FILENAME);
+    if (!file.is_open()) {
+        cerr << "Failed to open file: " << FILENAME << endl;
+    }
+
+    string department;
+    while (getline(file, department)) {
+        if (!isdigit(department[0])) {
+            cout << department << endl;
+        }
+    }
+
+    file.close();
 }
