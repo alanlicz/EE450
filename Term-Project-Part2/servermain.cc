@@ -19,7 +19,7 @@ using std::memset;
 using std::string;
 using std::vector;
 
-#define SERVER_PORT 30675
+#define SERVER_PORT 33675
 
 void readDataFiles(const vector<string>& filenames,
                    map<string, int>& department_backend_mapping);
@@ -63,6 +63,39 @@ int main() {
         close(server_fd);
         return 1;
     }
+
+    // Main loop to listen for UDP packets
+    while (true) {
+        char buffer[1024] = {0};
+        socklen_t len = sizeof(client_addr);  // Length of client address
+
+        // Receive data from the client
+        int n = recvfrom(server_fd, (char*)buffer, 1024, MSG_WAITALL,
+                         (struct sockaddr*)&client_addr, &len);
+        buffer[n] = '\0';  // Null-terminate the string
+
+        // ! Print the received message
+        cout << "Main server has received the request on department " << buffer
+             << " from the client using UDP over port " << SERVER_PORT << endl;
+
+        // Process the received data just like before (logic remains the same)
+        // ...
+
+        // Send the response back to the client using sendto
+        // Instead of `send`, use `sendto` which requires the client's address
+        const char* response =
+            "Your response here";  // Replace with actual response
+        sendto(server_fd, (const char*)response, strlen(response), MSG_CONFIRM,
+               (const struct sockaddr*)&client_addr, len);
+
+        // Rest of the code for handling the message stays mostly unchanged
+        // ...
+
+        // No need for a fork or closing the socket each time since UDP is
+        // connectionless
+    }
+    close(server_fd);
+    return 0;
 }
 
 void readDataFiles(const vector<string>& filenames,
