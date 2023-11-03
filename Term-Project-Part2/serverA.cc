@@ -15,6 +15,8 @@ const int CLIENT_PORT = 30675;
 const char* SERVER_IP = "127.0.0.1";
 const int SERVER_PORT = 33675;
 
+#define SERVER_NAME "Server A";
+
 using std::cerr;
 using std::cout;
 using std::endl;
@@ -25,14 +27,14 @@ using std::istringstream;
 using std::map;
 using std::set;
 using std::stoi;
+using std::strcpy;
 using std::string;
 
 #define FILE_NAME "dataA.txt"
 
-int readAndStore();
+int readAndStore(char*& data);
 
 int main() {
-
     char* data;
 
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -58,7 +60,7 @@ int main() {
     server_addr.sin_port = htons(SERVER_PORT);
     server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
 
-    readAndStore();
+    readAndStore(data);
 
     sendto(sockfd, data, strlen(data), 0, (struct sockaddr*)&server_addr,
            sizeof(server_addr));
@@ -66,10 +68,11 @@ int main() {
     cout << "Client A sent: " << data << endl;
 
     close(sockfd);
+    delete[] data;
     return 0;
 }
 
-int readAndStore() {
+int readAndStore(char*& data) {
     ifstream file("dataA.txt");  // Replace with your file path if needed
     if (!file.is_open()) {
         cerr << "Could not open the file." << endl;
@@ -97,13 +100,34 @@ int readAndStore() {
     file.close();  // Close the file after reading
 
     // Calculate the total length of the string
-    size_t total_length = 0;
+    const string serverPrefix = SERVER_NAME;
+    size_t total_length = serverPrefix.length() + 1;
     for (const auto& depart : department_data) {
         totalLength += depart.first.length() + 1;
     }
 
-    
+    // Allocate memory for the data
+    data = new char[totalLength];
+    strcpy(data, serverPrefix.c_str());
+    char* currentPos = data + serverPrefix.length();
 
+    // Copy keys into the buffer, separated by spaces
+    for (const auto& depart : department_data) {
+        strcpy(currentPos, depart.first.c_str());
+        currentPos += depart.first.length();
+        *currentPos = ' ';  // Add a space between keys
+        ++currentPos;
+    }
+
+    // Replace the last space with a null terminator
+    if (data != currentPos) {
+        *(currentPos - 1) = '\0';
+    } else {
+        *data = '\0';
+    }
+
+    // Output the result
+    cout << "Buffer containing keys: '" << data << "'" << endl;
 
     // Printing the map to see the results
     for (const auto& dept : department_data) {

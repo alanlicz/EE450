@@ -78,7 +78,6 @@ int main() {
         }
 
         // Print the map contents
-        cout << "Updated Department Map:" << endl;
         for (const auto &pair : departmentMap) {
             cout << pair.first << " => " << pair.second << endl;
         }
