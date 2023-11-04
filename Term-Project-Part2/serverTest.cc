@@ -7,6 +7,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <vector>
 
 using std::cerr;
 using std::cout;
@@ -14,9 +15,11 @@ using std::endl;
 using std::istringstream;
 using std::map;
 using std::string;
+using std::vector;
 
 const int SERVER_PORT = 33675;
 const int CLIENT_COUNT = 3;
+const int SERVER_PORTS[CLIENT_COUNT] = {30675, 31675, 32675};
 
 int main() {
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -38,6 +41,21 @@ int main() {
     }
 
     cout << "Main server is up and running" << endl;
+
+    // Send the signal to all client servers to start sending their data
+    for (int i = 0; i < CLIENT_COUNT; ++i) {
+        struct sockaddr_in client_addr;
+        memset(&client_addr, 0, sizeof(client_addr));
+        client_addr.sin_family = AF_INET;
+        client_addr.sin_port = htons(SERVER_PORTS[i]);
+        client_addr.sin_addr.s_addr =
+            inet_addr("127.0.0.1");  // Using loopback address
+
+        const char *signal = "SEND";
+        sendto(sockfd, signal, strlen(signal), 0,
+               (struct sockaddr *)&client_addr, sizeof(client_addr));
+        // Optionally check the return value of sendto() for error handling
+    }
 
     map<string, int> departmentMap;
     char buffer[1024];
@@ -73,20 +91,58 @@ int main() {
                 continue;
         }
 
+        // Clear the contents of the departmentMap before inserting new items
+        // departmentMap.clear();  // This line clears the map for new client
+        // data
+
         istringstream iss(departments);
         string firstWord, secondWord, dept;
 
         iss >> firstWord >> secondWord;
-        cout << firstWord << " " << secondWord << endl;
         while (iss >> dept) {
             departmentMap[dept] = value;
         }
+        received_client++;
+    }
 
-        // Print the map contents
-        for (const auto &pair : departmentMap) {
-            cout << pair.first << endl;
+    // This map will store vectors of strings, grouped by their server number.
+    map<int, vector<string>> groupedDepartments;
+
+    // Group department names by their server number.
+    for (const auto &pair : departmentMap) {
+        groupedDepartments[pair.second].push_back(pair.first);
+    }
+
+    // Now print the groups in order.
+    for (const auto &group : groupedDepartments) {
+        // Print the server name once.
+        if (group.first == 0) {
+            cout << "Server A" << endl;
+        } else if (group.first == 1) {
+            cout << "Server B" << endl;
+        } else if (group.first == 2) {
+            cout << "Server C" << endl;
+        }
+
+        // Print all departments for this server.
+        for (const auto &dept : group.second) {
+            cout << dept << endl;
         }
     }
+
+    // Print the map contents
+    // for (const auto &pair : departmentMap) {
+    //     if (pair.second == 0) {
+    //         cout << "Server A" << endl;
+    //         cout << pair.first << pair.second << endl;
+    //     } else if (pair.second == 1) {
+    //         cout << "Server B" << endl;
+    //         cout << pair.first << pair.second << endl;
+    //     } else if (pair.second == 2) {
+    //         cout << "Server C" << endl;
+    //         cout << pair.first << pair.second << endl;
+    //     }
+    // }
 
     close(sockfd);
     return 0;

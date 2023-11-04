@@ -15,7 +15,9 @@ const int CLIENT_PORT = 31675;
 const char* SERVER_IP = "127.0.0.1";
 const int SERVER_PORT = 33675;
 
-#define SERVER_NAME "Server B ";
+#define SERVER_NAME "Server B"
+#define FILE_NAME "dataB.txt"
+#define CLIENT_NAME "Client B"
 
 using std::cerr;
 using std::cout;
@@ -29,8 +31,6 @@ using std::set;
 using std::stoi;
 using std::strcpy;
 using std::string;
-
-#define FILE_NAME "dataB.txt"
 
 int readAndStore(char*& data);
 
@@ -60,12 +60,42 @@ int main() {
     server_addr.sin_port = htons(SERVER_PORT);
     server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
 
+    // Additions start here
+    char signal[1024];
+    struct sockaddr_in from_addr;
+    socklen_t from_len = sizeof(from_addr);
+
+    cout << SERVER_NAME << " waiting for signal from main server..." << endl;
+
+    while (true) {
+        // Wait for signal from main server
+        int recv_len = recvfrom(sockfd, signal, sizeof(signal) - 1, 0,
+                                (struct sockaddr*)&from_addr, &from_len);
+        if (recv_len < 0) {
+            cerr << "Error receiving signal from main server" << endl;
+            continue;  // Continue listening for the signal
+        }
+
+        // Null-terminate the received message and check if it is the 'SEND'
+        // signal
+        signal[recv_len] = '\0';
+        if (strcmp(signal, "SEND") == 0) {
+            cout << "Received signal to send data." << endl;
+            break;  // Exit the loop and proceed to send data
+        } else {
+            cerr << "Received unknown signal from main server: " << signal
+                 << endl;
+            // Optionally, you can decide to break or continue based on specific
+            // conditions
+        }
+    }
+
     readAndStore(data);
 
     sendto(sockfd, data, strlen(data), 0, (struct sockaddr*)&server_addr,
            sizeof(server_addr));
 
-    cout << "Client A sent: " << data << endl;
+    cout << CLIENT_NAME << " sent: " << data << endl;
 
     close(sockfd);
     delete[] data;
@@ -99,7 +129,7 @@ int readAndStore(char*& data) {
     file.close();  // Close the file after reading
 
     // Calculate the total length of the string
-    const string serverPrefix = SERVER_NAME;
+    const string serverPrefix = SERVER_NAME + string(" ");
     size_t total_length = serverPrefix.length() + 1;
     for (const auto& depart : department_data) {
         total_length += depart.first.length() + 1;

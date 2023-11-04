@@ -11,13 +11,13 @@
 #include <sstream>
 #include <string>
 
-const int CLIENT_PORT = 30675;
+const int CLIENT_PORT = 32675;
 const char* SERVER_IP = "127.0.0.1";
 const int SERVER_PORT = 33675;
 
-#define SERVER_NAME "Server A"
-#define FILE_NAME "dataA.txt"
-#define CLIENT_NAME "Client A"
+#define SERVER_NAME "Server C"
+#define FILE_NAME "dataC.txt"
+#define CLIENT_NAME "Client C"
 
 using std::cerr;
 using std::cout;

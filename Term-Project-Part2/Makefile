@@ -1,6 +1,6 @@
 CXX = g++
 
-all: servermain client serverTest serverA serverB
+all: servermain client serverTest serverA serverB serverC
 
 servermain: servermain.cc
 	$(CXX) servermain.cc -o servermain
@@ -16,6 +16,9 @@ serverA: serverA.cc
 
 serverB: serverB.cc
 	$(CXX) serverB.cc -o serverB
+
+serverC: serverC.cc
+	$(CXX) serverC.cc -o serverC
 
 clean:
 	rm -f servermain client serverTest clientTest	
