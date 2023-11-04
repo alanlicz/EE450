@@ -16,6 +16,7 @@ using std::map;
 using std::string;
 
 const int SERVER_PORT = 33675;
+const int CLIENT_COUNT = 3;
 
 int main() {
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -41,8 +42,9 @@ int main() {
     map<string, int> departmentMap;
     char buffer[1024];
     socklen_t len = sizeof(client_addr);
+    int received_client = 0;
 
-    while (true) {
+    while (received_client < CLIENT_COUNT) {
         int n = recvfrom(sockfd, buffer, 1024, 0,
                          (struct sockaddr *)&client_addr, &len);
         if (n < 0) {
@@ -55,7 +57,7 @@ int main() {
         int value = -1;
 
         // Assign value based on client's port
-        cout << "Client port: " << ntohs(client_addr.sin_port) << endl;
+        // cout << "Client port: " << ntohs(client_addr.sin_port) << endl;
         switch (ntohs(client_addr.sin_port)) {
             case 30675:
                 value = 0;
@@ -72,14 +74,17 @@ int main() {
         }
 
         istringstream iss(departments);
-        string dept;
+        string firstWord, secondWord, dept;
+
+        iss >> firstWord >> secondWord;
+        cout << firstWord << " " << secondWord << endl;
         while (iss >> dept) {
             departmentMap[dept] = value;
         }
 
         // Print the map contents
         for (const auto &pair : departmentMap) {
-            cout << pair.first << " => " << pair.second << endl;
+            cout << pair.first << endl;
         }
     }
 

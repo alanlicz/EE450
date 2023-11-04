@@ -15,7 +15,7 @@ const int CLIENT_PORT = 30675;
 const char* SERVER_IP = "127.0.0.1";
 const int SERVER_PORT = 33675;
 
-#define SERVER_NAME "Server A";
+#define SERVER_NAME "Server A ";
 
 using std::cerr;
 using std::cout;
@@ -73,7 +73,7 @@ int main() {
 }
 
 int readAndStore(char*& data) {
-    ifstream file("dataA.txt");  // Replace with your file path if needed
+    ifstream file(FILE_NAME);  // Replace with your file path if needed
     if (!file.is_open()) {
         cerr << "Could not open the file." << endl;
         return 1;
@@ -82,7 +82,6 @@ int readAndStore(char*& data) {
     map<string, set<int>> department_data;
     string line;
     string currentDepartment;
-    int totalLength = 0;
 
     while (getline(file, line)) {
         // If the line contains department name (not digits)
@@ -103,11 +102,11 @@ int readAndStore(char*& data) {
     const string serverPrefix = SERVER_NAME;
     size_t total_length = serverPrefix.length() + 1;
     for (const auto& depart : department_data) {
-        totalLength += depart.first.length() + 1;
+        total_length += depart.first.length() + 1;
     }
 
     // Allocate memory for the data
-    data = new char[totalLength];
+    data = new char[total_length];
     strcpy(data, serverPrefix.c_str());
     char* currentPos = data + serverPrefix.length();
 
