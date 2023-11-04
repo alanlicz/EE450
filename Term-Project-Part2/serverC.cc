@@ -35,6 +35,8 @@ using std::string;
 int readAndStore(char*& data);
 
 int main() {
+    cout << SERVER_NAME << " is up and running using UDP on port" << SERVER_PORT
+         << endl;
     char* data;
 
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -65,7 +67,7 @@ int main() {
     struct sockaddr_in from_addr;
     socklen_t from_len = sizeof(from_addr);
 
-    cout << SERVER_NAME << " waiting for signal from main server..." << endl;
+    // cout << SERVER_NAME << " waiting for signal from main server..." << endl;
 
     while (true) {
         // Wait for signal from main server
@@ -80,7 +82,7 @@ int main() {
         // signal
         signal[recv_len] = '\0';
         if (strcmp(signal, "SEND") == 0) {
-            cout << "Received signal to send data." << endl;
+            // cout << "Received signal to send data." << endl;
             break;  // Exit the loop and proceed to send data
         } else {
             cerr << "Received unknown signal from main server: " << signal
@@ -95,7 +97,7 @@ int main() {
     sendto(sockfd, data, strlen(data), 0, (struct sockaddr*)&server_addr,
            sizeof(server_addr));
 
-    cout << CLIENT_NAME << " sent: " << data << endl;
+    cout << CLIENT_NAME << " has sent a department list to Main server" << endl;
 
     close(sockfd);
     delete[] data;
@@ -129,16 +131,18 @@ int readAndStore(char*& data) {
     file.close();  // Close the file after reading
 
     // Calculate the total length of the string
-    const string serverPrefix = SERVER_NAME + string(" ");
-    size_t total_length = serverPrefix.length() + 1;
+    // const string serverPrefix = SERVER_NAME + string(" ");
+    // size_t total_length = serverPrefix.length() + 1;
+    size_t total_length = 0;
     for (const auto& depart : department_data) {
         total_length += depart.first.length() + 1;
     }
 
     // Allocate memory for the data
     data = new char[total_length];
-    strcpy(data, serverPrefix.c_str());
-    char* currentPos = data + serverPrefix.length();
+    // strcpy(data, serverPrefix.c_str());
+    // char* currentPos = data + serverPrefix.length();
+    char* currentPos = data;
 
     // Copy keys into the buffer, separated by spaces
     for (const auto& depart : department_data) {
@@ -156,16 +160,16 @@ int readAndStore(char*& data) {
     }
 
     // Output the result
-    cout << "Buffer containing keys: '" << data << "'" << endl;
+    // cout << "Buffer containing keys: '" << data << "'" << endl;
 
     // Printing the map to see the results
-    for (const auto& dept : department_data) {
-        cout << dept.first << ":" << endl;
-        for (int num : dept.second) {
-            cout << num << " ";
-        }
-        cout << endl << endl;
-    }
+    // for (const auto& dept : department_data) {
+    //     cout << dept.first << ":" << endl;
+    //     for (int num : dept.second) {
+    //         cout << num << " ";
+    //     }
+    //     cout << endl << endl;
+    // }
 
     return 0;
 }

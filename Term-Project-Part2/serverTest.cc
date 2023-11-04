@@ -98,7 +98,7 @@ int main() {
         istringstream iss(departments);
         string firstWord, secondWord, dept;
 
-        iss >> firstWord >> secondWord;
+        // iss >> firstWord >> secondWord;
         while (iss >> dept) {
             departmentMap[dept] = value;
         }
@@ -130,19 +130,7 @@ int main() {
         }
     }
 
-    // Print the map contents
-    // for (const auto &pair : departmentMap) {
-    //     if (pair.second == 0) {
-    //         cout << "Server A" << endl;
-    //         cout << pair.first << pair.second << endl;
-    //     } else if (pair.second == 1) {
-    //         cout << "Server B" << endl;
-    //         cout << pair.first << pair.second << endl;
-    //     } else if (pair.second == 2) {
-    //         cout << "Server C" << endl;
-    //         cout << pair.first << pair.second << endl;
-    //     }
-    // }
+    
 
     close(sockfd);
     return 0;
