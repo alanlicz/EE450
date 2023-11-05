@@ -32,11 +32,11 @@ using std::stoi;
 using std::strcpy;
 using std::string;
 
-int readAndStore(char*& data);
+int readAndStore(char*& data, map<string, set<int>>& department_data);
 
 int main() {
-    cout << SERVER_NAME << " is up and running using UDP on port " << SERVER_PORT
-         << endl;
+    cout << SERVER_NAME << " is up and running using UDP on port "
+         << CLIENT_PORT << endl;
     char* data;
 
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -92,26 +92,59 @@ int main() {
         }
     }
 
-    readAndStore(data);
+    map<string, set<int>> department_data;
+
+    readAndStore(data, department_data);
 
     sendto(sockfd, data, strlen(data), 0, (struct sockaddr*)&server_addr,
            sizeof(server_addr));
 
     cout << CLIENT_NAME << " has sent a department list to Main server" << endl;
 
+    while (true) {
+        char message[1024];
+
+        int n = recvfrom(sockfd, message, sizeof(message) - 1, 0,
+                         (struct sockaddr*)&from_addr, &from_len);
+
+        if (n > 0) {
+            message[n] = '\0';  // Null-terminate the string
+            cout << SERVER_NAME << " has received a request for " << message
+                 << endl;
+        }
+
+        auto it = department_data.find(message);
+        if (it != department_data.end()) {
+            cout << SERVER_NAME << " found " << it->second.size()
+                 << " distinct students for " << message << ": ";
+            for (auto numIt = it->second.begin(); numIt != it->second.end();
+                 ++numIt) {
+                if (numIt != it->second.begin()) {
+                    cout << ", ";
+                }
+                cout << *numIt;
+            }
+            cout << endl;
+        } else {
+            cout << SERVER_NAME << " did not find the department " << message
+                 << endl;
+        }
+
+        cout << SERVER_NAME << " has sent the results to Main Server" << endl;
+    }
+
     close(sockfd);
     delete[] data;
     return 0;
 }
 
-int readAndStore(char*& data) {
+int readAndStore(char*& data, map<string, set<int>>& department_data) {
     ifstream file(FILE_NAME);  // Replace with your file path if needed
     if (!file.is_open()) {
         cerr << "Could not open the file." << endl;
         return 1;
     }
 
-    map<string, set<int>> department_data;
     string line;
     string currentDepartment;
 

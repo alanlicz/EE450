@@ -35,8 +35,8 @@ using std::string;
 int readAndStore(char*& data);
 
 int main() {
-    cout << SERVER_NAME << " is up and running using UDP on port" << SERVER_PORT
-         << endl;
+    cout << SERVER_NAME << " is up and running using UDP on port "
+         << CLIENT_PORT << endl;
     char* data;
 
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -98,6 +98,18 @@ int main() {
            sizeof(server_addr));
 
     cout << CLIENT_NAME << " has sent a department list to Main server" << endl;
+    while (true) {
+        char message[1024];
+
+        int n = recvfrom(sockfd, message, sizeof(message) - 1, 0,
+                         (struct sockaddr*)&from_addr, &from_len);
+
+        if (n > 0) {
+            message[n] = '\0';  // Null-terminate the string
+            cout << SERVER_NAME << " has received a request for " << message
+                 << endl;
+        }
+    }
 
     close(sockfd);
     delete[] data;

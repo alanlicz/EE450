@@ -10,6 +10,7 @@
 #include <vector>
 
 using std::cerr;
+using std::cin;
 using std::cout;
 using std::endl;
 using std::istringstream;
@@ -19,7 +20,7 @@ using std::vector;
 
 const int SERVER_PORT = 33675;
 const int CLIENT_COUNT = 3;
-const int SERVER_PORTS[CLIENT_COUNT] = {30675, 31675, 32675};
+const int CLIENTS_PORTS[CLIENT_COUNT] = {30675, 31675, 32675};
 
 int main() {
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -44,10 +45,9 @@ int main() {
 
     // Send the signal to all client servers to start sending their data
     for (int i = 0; i < CLIENT_COUNT; ++i) {
-        struct sockaddr_in client_addr;
         memset(&client_addr, 0, sizeof(client_addr));
         client_addr.sin_family = AF_INET;
-        client_addr.sin_port = htons(SERVER_PORTS[i]);
+        client_addr.sin_port = htons(CLIENTS_PORTS[i]);
         client_addr.sin_addr.s_addr =
             inet_addr("127.0.0.1");  // Using loopback address
 
@@ -105,6 +105,10 @@ int main() {
         received_client++;
     }
 
+    cout << "Main server has received the department list from Backend server "
+            "A/B/C using UDP over port "
+         << SERVER_PORT << endl;
+
     // This map will store vectors of strings, grouped by their server number.
     map<int, vector<string>> groupedDepartments;
 
@@ -130,7 +134,71 @@ int main() {
         }
     }
 
-    
+    while (true) {
+        cout << "Enter Department Name: ";
+        string dept_input;
+        cin >> dept_input;
+
+        struct sockaddr_in client_addr1;
+        memset(&client_addr1, 0, sizeof(client_addr1));
+        client_addr1.sin_family = AF_INET;
+        client_addr1.sin_port = htons(CLIENTS_PORTS[0]);
+        client_addr1.sin_addr.s_addr =
+            inet_addr("127.0.0.1");  // Using loopback address
+
+        struct sockaddr_in client_addr2;
+        memset(&client_addr2, 0, sizeof(client_addr2));
+        client_addr2.sin_family = AF_INET;
+        client_addr2.sin_port = htons(CLIENTS_PORTS[1]);
+        client_addr2.sin_addr.s_addr =
+            inet_addr("127.0.0.1");  // Using loopback address
+
+        struct sockaddr_in client_addr3;
+        memset(&client_addr3, 0, sizeof(client_addr3));
+        client_addr3.sin_family = AF_INET;
+        client_addr3.sin_port = htons(CLIENTS_PORTS[2]);
+        client_addr3.sin_addr.s_addr =
+            inet_addr("127.0.0.1");  // Using loopback address
+
+        auto it = departmentMap.find(dept_input);
+        if (it != departmentMap.end()) {
+            int clientNumber = it->second;
+            switch (clientNumber) {
+                case 0:
+                    sendto(sockfd, dept_input.c_str(), dept_input.size(), 0,
+                           (struct sockaddr *)&client_addr1,
+                           sizeof(client_addr1));
+                    cout << dept_input << " shows up in server A" << endl;
+                    cout << "The Main Server has sent request for "
+                         << dept_input << " to server A using UDP over port "
+                         << SERVER_PORT << endl;
+                    break;
+                case 1:
+                    sendto(sockfd, dept_input.c_str(), dept_input.size(), 0,
+                           (struct sockaddr *)&client_addr2,
+                           sizeof(client_addr2));
+                    cout << dept_input << " shows up in server B" << endl;
+                    cout << "The Main Server has sent request for "
+                         << dept_input << " to server B using UDP over port "
+                         << SERVER_PORT << endl;
+                    break;
+                case 2:
+                    sendto(sockfd, dept_input.c_str(), dept_input.size(), 0,
+                           (struct sockaddr *)&client_addr3,
+                           sizeof(client_addr3));
+                    cout << dept_input << " shows up in server C" << endl;
+                    cout << "The Main Server has sent request for "
+                         << dept_input << " to server C using UDP over port "
+                         << SERVER_PORT << endl;
+                    break;
+                default:
+                    cout << dept_input << " does not show up in Backend servers"
+                         << endl;
+            }
+        } else {
+            cout << "Department not found" << endl;
+        }
+    }
 
     close(sockfd);
     return 0;
