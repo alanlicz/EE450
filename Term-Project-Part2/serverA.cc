@@ -31,6 +31,7 @@ using std::set;
 using std::stoi;
 using std::strcpy;
 using std::string;
+using std::to_string;
 
 int readAndStore(char*& data, map<string, set<int>>& department_data);
 
@@ -113,6 +114,7 @@ int main() {
                  << endl;
         }
 
+        string data_to_send;
         auto it = department_data.find(message);
         if (it != department_data.end()) {
             cout << SERVER_NAME << " found " << it->second.size()
@@ -120,11 +122,16 @@ int main() {
             for (auto numIt = it->second.begin(); numIt != it->second.end();
                  ++numIt) {
                 if (numIt != it->second.begin()) {
+                    data_to_send += ", ";
                     cout << ", ";
                 }
+                data_to_send += to_string(*numIt);  // Convert numIt to string
                 cout << *numIt;
             }
+            data_to_send += "\n";
             cout << endl;
+            sendto(sockfd, data_to_send.c_str(), data_to_send.size(), 0,
+                   (struct sockaddr*)&server_addr, sizeof(server_addr));
         } else {
             cout << SERVER_NAME << " did not find the department " << message
                  << endl;

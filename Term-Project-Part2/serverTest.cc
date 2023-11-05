@@ -43,19 +43,34 @@ int main() {
 
     cout << "Main server is up and running" << endl;
 
-    // Send the signal to all client servers to start sending their data
-    for (int i = 0; i < CLIENT_COUNT; ++i) {
-        memset(&client_addr, 0, sizeof(client_addr));
-        client_addr.sin_family = AF_INET;
-        client_addr.sin_port = htons(CLIENTS_PORTS[i]);
-        client_addr.sin_addr.s_addr =
-            inet_addr("127.0.0.1");  // Using loopback address
+    struct sockaddr_in client_addr1;
+    memset(&client_addr1, 0, sizeof(client_addr1));
+    client_addr1.sin_family = AF_INET;
+    client_addr1.sin_port = htons(CLIENTS_PORTS[0]);
+    client_addr1.sin_addr.s_addr =
+        inet_addr("127.0.0.1");  // Using loopback address
 
-        const char *signal = "SEND";
-        sendto(sockfd, signal, strlen(signal), 0,
-               (struct sockaddr *)&client_addr, sizeof(client_addr));
-        // Optionally check the return value of sendto() for error handling
-    }
+    struct sockaddr_in client_addr2;
+    memset(&client_addr2, 0, sizeof(client_addr2));
+    client_addr2.sin_family = AF_INET;
+    client_addr2.sin_port = htons(CLIENTS_PORTS[1]);
+    client_addr2.sin_addr.s_addr =
+        inet_addr("127.0.0.1");  // Using loopback address
+
+    struct sockaddr_in client_addr3;
+    memset(&client_addr3, 0, sizeof(client_addr3));
+    client_addr3.sin_family = AF_INET;
+    client_addr3.sin_port = htons(CLIENTS_PORTS[2]);
+    client_addr3.sin_addr.s_addr =
+        inet_addr("127.0.0.1");  // Using loopback address
+
+    const char *signal = "SEND";
+    sendto(sockfd, signal, strlen(signal), 0, (struct sockaddr *)&client_addr1,
+           sizeof(client_addr1));
+    sendto(sockfd, signal, strlen(signal), 0, (struct sockaddr *)&client_addr2,
+           sizeof(client_addr2));
+    sendto(sockfd, signal, strlen(signal), 0, (struct sockaddr *)&client_addr3,
+           sizeof(client_addr3));
 
     map<string, int> departmentMap;
     char buffer[1024];
@@ -139,27 +154,6 @@ int main() {
         string dept_input;
         cin >> dept_input;
 
-        struct sockaddr_in client_addr1;
-        memset(&client_addr1, 0, sizeof(client_addr1));
-        client_addr1.sin_family = AF_INET;
-        client_addr1.sin_port = htons(CLIENTS_PORTS[0]);
-        client_addr1.sin_addr.s_addr =
-            inet_addr("127.0.0.1");  // Using loopback address
-
-        struct sockaddr_in client_addr2;
-        memset(&client_addr2, 0, sizeof(client_addr2));
-        client_addr2.sin_family = AF_INET;
-        client_addr2.sin_port = htons(CLIENTS_PORTS[1]);
-        client_addr2.sin_addr.s_addr =
-            inet_addr("127.0.0.1");  // Using loopback address
-
-        struct sockaddr_in client_addr3;
-        memset(&client_addr3, 0, sizeof(client_addr3));
-        client_addr3.sin_family = AF_INET;
-        client_addr3.sin_port = htons(CLIENTS_PORTS[2]);
-        client_addr3.sin_addr.s_addr =
-            inet_addr("127.0.0.1");  // Using loopback address
-
         auto it = departmentMap.find(dept_input);
         if (it != departmentMap.end()) {
             int clientNumber = it->second;
@@ -197,6 +191,15 @@ int main() {
             }
         } else {
             cout << "Department not found" << endl;
+        }
+
+        char student_ID[1024];
+
+        int n = recvfrom(sockfd, student_ID, sizeof(student_ID) - 1, 0,
+                         (struct sockaddr *)&client_addr, &len);
+        if (n > 0) {
+            student_ID[n] = '\0';  // Null-terminate the string
+            cout << "Main Server has received: " << student_ID << endl;
         }
     }
 
