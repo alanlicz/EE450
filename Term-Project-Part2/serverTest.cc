@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <map>
@@ -191,15 +192,41 @@ int main() {
             }
         } else {
             cout << "Department not found" << endl;
+            continue;
         }
 
         char student_ID[1024];
 
         int n = recvfrom(sockfd, student_ID, sizeof(student_ID) - 1, 0,
                          (struct sockaddr *)&client_addr, &len);
+
+        string which_server;
+        switch (ntohs(client_addr.sin_port)) {
+            case 30675:
+                which_server = "A";
+                break;
+            case 31675:
+                which_server = "B";
+                break;
+            case 32675:
+                which_server = "C";
+                break;
+            default:
+                cerr << "Unknown client port" << endl;
+                continue;
+        }
+        cout << "The Main server has received searching result(s) of "
+             << dept_input << " from Backend server " << which_server << endl;
+
+        string str(student_ID);
+        int student_count = count(str.begin(), str.end(), ',') + 1;
+
+        cout << "There are " << student_count << "distinct students in "
+             << dept_input << endl;
+
         if (n > 0) {
             student_ID[n] = '\0';  // Null-terminate the string
-            cout << "Main Server has received: " << student_ID << endl;
+            cout << " There IDs are " << student_ID << endl;
         }
     }
 
