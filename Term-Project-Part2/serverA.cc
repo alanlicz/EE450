@@ -63,12 +63,9 @@ int main() {
     server_addr.sin_port = htons(SERVER_PORT);
     server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
 
-    // Additions start here
     char signal[1024];
     struct sockaddr_in from_addr;
     socklen_t from_len = sizeof(from_addr);
-
-    // cout << SERVER_NAME << " waiting for signal from main server..." << endl;
 
     while (true) {
         // Wait for signal from main server
@@ -88,8 +85,6 @@ int main() {
         } else {
             cerr << "Received unknown signal from main server: " << signal
                  << endl;
-            // Optionally, you can decide to break or continue based on specific
-            // conditions
         }
     }
 
@@ -146,7 +141,7 @@ int main() {
 }
 
 int readAndStore(char*& data, map<string, set<int>>& department_data) {
-    ifstream file(FILE_NAME);  // Replace with your file path if needed
+    ifstream file(FILE_NAME);
     if (!file.is_open()) {
         cerr << "Could not open the file." << endl;
         return 1;
@@ -170,9 +165,6 @@ int readAndStore(char*& data, map<string, set<int>>& department_data) {
 
     file.close();  // Close the file after reading
 
-    // Calculate the total length of the string
-    // const string serverPrefix = SERVER_NAME + string(" ");
-    // size_t total_length = serverPrefix.length() + 1;
     size_t total_length = 0;
     for (const auto& depart : department_data) {
         total_length += depart.first.length() + 1;
@@ -180,8 +172,6 @@ int readAndStore(char*& data, map<string, set<int>>& department_data) {
 
     // Allocate memory for the data
     data = new char[total_length];
-    // strcpy(data, serverPrefix.c_str());
-    // char* currentPos = data + serverPrefix.length();
     char* currentPos = data;
 
     // Copy keys into the buffer, separated by spaces
@@ -198,18 +188,6 @@ int readAndStore(char*& data, map<string, set<int>>& department_data) {
     } else {
         *data = '\0';
     }
-
-    // Output the result
-    // cout << "Buffer containing keys: '" << data << "'" << endl;
-
-    // Printing the map to see the results
-    // for (const auto& dept : department_data) {
-    //     cout << dept.first << ":" << endl;
-    //     for (int num : dept.second) {
-    //         cout << num << " ";
-    //     }
-    //     cout << endl << endl;
-    // }
 
     return 0;
 }

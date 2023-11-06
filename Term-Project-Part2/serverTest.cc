@@ -91,7 +91,6 @@ int main() {
         int value = -1;
 
         // Assign value based on client's port
-        // cout << "Client port: " << ntohs(client_addr.sin_port) << endl;
         switch (ntohs(client_addr.sin_port)) {
             case 30675:
                 value = 0;
@@ -106,10 +105,6 @@ int main() {
                 cerr << "Unknown client port" << endl;
                 continue;
         }
-
-        // Clear the contents of the departmentMap before inserting new items
-        // departmentMap.clear();  // This line clears the map for new client
-        // data
 
         istringstream iss(departments);
         string firstWord, secondWord, dept;
