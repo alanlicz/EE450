@@ -17,7 +17,6 @@ const int SERVER_PORT = 33675;
 
 #define SERVER_NAME "Server B"
 #define FILE_NAME "dataB.txt"
-#define CLIENT_NAME "Client B"
 
 using std::cerr;
 using std::cout;
@@ -95,7 +94,7 @@ int main() {
     sendto(sockfd, data, strlen(data), 0, (struct sockaddr*)&server_addr,
            sizeof(server_addr));
 
-    cout << CLIENT_NAME << " has sent a department list to Main server" << endl;
+    cout << SERVER_NAME << " has sent a department list to Main Server" << endl;
 
     while (true) {
         char message[1024];
