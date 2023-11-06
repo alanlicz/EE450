@@ -223,6 +223,7 @@ int main() {
             student_ID[n] = '\0';  // Null-terminate the string
             cout << "Their IDs are " << student_ID << endl;
         }
+        cout << "-----Start a new query-----" << endl;
     }
 
     close(sockfd);
