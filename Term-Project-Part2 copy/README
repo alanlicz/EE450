@@ -1,0 +1,8 @@
+Tianyang Li
+2364211675
+22.04.3 LTS
+I followed the BeeJ tutorial and finished a socket programming assignment using UDP protocol
+My code files are servermain.cc, serverA.cc, serverB.cc and serverC.cc. Server A, B and C boot up first and wait for servermain to boot up. After servermain boots up it will send a signal to all 3 backend servers so they can send data to servermain. I also wrote a makefile to compile the program.
+I put all the messages inside a buffer and send them between servermain and backend server. Different information such as student ID and department names will be separated by semicolon
+I haven't found any
+No
