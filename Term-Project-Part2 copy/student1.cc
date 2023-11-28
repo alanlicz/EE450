@@ -13,7 +13,7 @@ using std::endl;
 using std::string;
 
 const char *SERVER_IP = "127.0.0.1";
-const int SERVER_PORT = 44675;
+const int SERVER_PORT = 45675;
 
 int main() {
     // Create a socket for the client
