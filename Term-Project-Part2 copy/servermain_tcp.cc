@@ -78,267 +78,251 @@ int main() {
     // Accept incoming TCP connections and handle them
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
-    int client_sockfd;
+    int client_sockfd, new_socket;
 
     // Set up fd_set and add tcp_sockfd and udp_sockfd
-    fd_set readfds;
-    int max_fd = std::max(tcp_sockfd, udp_sockfd);
+    // fd_set readfds;
+    // int max_fd = std::max(tcp_sockfd, udp_sockfd);
     cout << "Main server is up and running" << endl;
 
-    struct timeval timeout;
-    timeout.tv_sec = 2;   // Set a 5-second timeout
-    timeout.tv_usec = 0;  // 0 microseconds
+    // struct timeval timeout;
+    // timeout.tv_sec = 2;   // Set a 5-second timeout
+    // timeout.tv_usec = 0;  // 0 microseconds
 
-    while (true) {
-        FD_ZERO(&readfds);
-        FD_SET(tcp_sockfd, &readfds);
-        FD_SET(udp_sockfd, &readfds);
+    // FD_ZERO(&readfds);
+    // FD_SET(tcp_sockfd, &readfds);
+    // FD_SET(udp_sockfd, &readfds);
 
-        // Reset timeout values each iteration
-        timeout.tv_sec = 2;
-        timeout.tv_usec = 0;
+    // // Reset timeout values each iteration
+    // timeout.tv_sec = 2;
+    // timeout.tv_usec = 0;
 
-        // Call select() with timeout
-        int activity = select(max_fd + 1, &readfds, NULL, NULL, &timeout);
+    // // Call select() with timeout
+    // int activity = select(max_fd + 1, &readfds, NULL, NULL, &timeout);
 
-        cout << "debug" << endl;
+    // cout << "debug" << endl;
 
-        if (activity < 0 && errno != EINTR) {
-            cerr << "select error" << endl;
-            break;
-        } else if (activity == 0) {
-            // Timeout occurred, no activity detected
-            // You can perform any periodic checks here or just continue
+    // if (activity < 0 && errno != EINTR) {
+    //     cerr << "select error" << endl;
+    //     break;
+    // } else if (activity == 0) {
+    //     // Timeout occurred, no activity detected
+    //     // You can perform any periodic checks here or just continue
+    //     continue;
+    // }
+    // cout << "debug" << endl;
+
+    // Check if there is activity on the TCP socket
+
+    struct sockaddr_in backend_addr1;
+    memset(&backend_addr1, 0, sizeof(backend_addr1));
+    backend_addr1.sin_family = AF_INET;
+    backend_addr1.sin_port = htons(CLIENTS_PORTS[0]);
+    backend_addr1.sin_addr.s_addr =
+        inet_addr("127.0.0.1");  // Using loopback address
+
+    struct sockaddr_in backend_addr2;
+    memset(&backend_addr2, 0, sizeof(backend_addr2));
+    backend_addr2.sin_family = AF_INET;
+    backend_addr2.sin_port = htons(CLIENTS_PORTS[1]);
+    backend_addr2.sin_addr.s_addr =
+        inet_addr("127.0.0.1");  // Using loopback address
+
+    struct sockaddr_in backend_addr3;
+    memset(&backend_addr3, 0, sizeof(backend_addr3));
+    backend_addr3.sin_family = AF_INET;
+    backend_addr3.sin_port = htons(CLIENTS_PORTS[2]);
+    backend_addr3.sin_addr.s_addr =
+        inet_addr("127.0.0.1");  // Using loopback address
+
+    const char *signal = "SEND";
+    sendto(udp_sockfd, signal, strlen(signal), 0,
+           (struct sockaddr *)&backend_addr1, sizeof(backend_addr1));
+    sendto(udp_sockfd, signal, strlen(signal), 0,
+           (struct sockaddr *)&backend_addr2, sizeof(backend_addr2));
+    sendto(udp_sockfd, signal, strlen(signal), 0,
+           (struct sockaddr *)&backend_addr3, sizeof(backend_addr3));
+
+    map<string, int> departmentMap;
+    char buffer[1024];
+    socklen_t len = sizeof(udp_addr);
+    int received_client = 0;
+
+    // Receive data from 3 UDP server
+    while (received_client < CLIENT_COUNT) {
+        int n = recvfrom(udp_sockfd, buffer, 1024, 0,
+                         (struct sockaddr *)&udp_addr, &len);
+        if (n < 0) {
+            cerr << "Error receiving data" << endl;
             continue;
         }
-        cout << "debug" << endl;
 
-        // Check if there is activity on the TCP socket
-        if (FD_ISSET(tcp_sockfd, &readfds)) {
-            // Handle new TCP connection or read from existing connection
+        buffer[n] = '\0';  // Null-terminate the string
+        string departments(buffer);
 
-            client_sockfd = accept(tcp_sockfd, (struct sockaddr *)&client_addr,
-                                   &client_addr_len);
-            if (client_sockfd < 0) {
-                cerr << "Failed to accept TCP connection." << endl;
-                continue;  // Continue accepting other connections even
-                           // if one fails
-            }
+        int value = -1;
 
-            // TODO: Add code to read from and write to the client
-            // socket (client_sockfd) This can include reading the
-            // client's query, processing it, and sending back a
-            // response
-
-            // Close the client socket after handling
-            close(client_sockfd);
+        // Assign value based on client's port
+        switch (ntohs(udp_addr.sin_port)) {
+            case 41675:
+                value = 0;
+                break;
+            case 42675:
+                value = 1;
+                break;
+            case 43675:
+                value = 2;
+                break;
+            default:
+                cerr << "Unknown client port" << endl;
+                continue;
         }
 
-        // Check if there is activity on the UDP socket
-        if (FD_ISSET(udp_sockfd, &readfds)) {
-            struct sockaddr_in backend_addr1;
-            memset(&backend_addr1, 0, sizeof(backend_addr1));
-            backend_addr1.sin_family = AF_INET;
-            backend_addr1.sin_port = htons(CLIENTS_PORTS[0]);
-            backend_addr1.sin_addr.s_addr =
-                inet_addr("127.0.0.1");  // Using loopback address
+        istringstream iss(departments);
+        string dept;
+        // string firstWord, secondWord, dept;
+        // iss >> firstWord >> secondWord;
+        while (iss >> dept) {
+            departmentMap[dept] = value;
+        }
+        received_client++;
+    }
 
-            struct sockaddr_in backend_addr2;
-            memset(&backend_addr2, 0, sizeof(backend_addr2));
-            backend_addr2.sin_family = AF_INET;
-            backend_addr2.sin_port = htons(CLIENTS_PORTS[1]);
-            backend_addr2.sin_addr.s_addr =
-                inet_addr("127.0.0.1");  // Using loopback address
+    cout << "Main server has received the department list from "
+            "server "
+            "A/B/C using UDP over port "
+         << SERVER_PORT_UDP << endl;
 
-            struct sockaddr_in backend_addr3;
-            memset(&backend_addr3, 0, sizeof(backend_addr3));
-            backend_addr3.sin_family = AF_INET;
-            backend_addr3.sin_port = htons(CLIENTS_PORTS[2]);
-            backend_addr3.sin_addr.s_addr =
-                inet_addr("127.0.0.1");  // Using loopback address
+    // This map will store vectors of strings, grouped by their
+    // server number.
+    map<int, vector<string>> groupedDepartments;
 
-            const char *signal = "SEND";
-            sendto(udp_sockfd, signal, strlen(signal), 0,
-                   (struct sockaddr *)&backend_addr1, sizeof(backend_addr1));
-            sendto(udp_sockfd, signal, strlen(signal), 0,
-                   (struct sockaddr *)&backend_addr2, sizeof(backend_addr2));
-            sendto(udp_sockfd, signal, strlen(signal), 0,
-                   (struct sockaddr *)&backend_addr3, sizeof(backend_addr3));
+    // Group department names by their server number.
+    for (const auto &pair : departmentMap) {
+        groupedDepartments[pair.second].push_back(pair.first);
+    }
 
-            map<string, int> departmentMap;
-            char buffer[1024];
-            socklen_t len = sizeof(udp_addr);
-            int received_client = 0;
+    // Now print the groups in order.
+    for (const auto &group : groupedDepartments) {
+        // Print the server name once.
+        if (group.first == 0) {
+            cout << "Server A: ";
+        } else if (group.first == 1) {
+            cout << "Server B: ";
+        } else if (group.first == 2) {
+            cout << "Server C: ";
+        }
 
-            // Receive data from 3 UDP server
-            while (received_client < CLIENT_COUNT) {
-                int n = recvfrom(udp_sockfd, buffer, 1024, 0,
-                                 (struct sockaddr *)&udp_addr, &len);
-                if (n < 0) {
-                    cerr << "Error receiving data" << endl;
-                    continue;
-                }
+        // Print all departments for this server.
+        for (const auto &dept : group.second) {
+            cout << dept << " ";
+        }
+        cout << endl;
+    }
 
-                buffer[n] = '\0';  // Null-terminate the string
-                string departments(buffer);
-
-                int value = -1;
-
-                // Assign value based on client's port
-                switch (ntohs(udp_addr.sin_port)) {
-                    case 41675:
-                        value = 0;
-                        break;
-                    case 42675:
-                        value = 1;
-                        break;
-                    case 43675:
-                        value = 2;
-                        break;
-                    default:
-                        cerr << "Unknown client port" << endl;
-                        continue;
-                }
-
-                istringstream iss(departments);
-                string dept;
-                // string firstWord, secondWord, dept;
-                // iss >> firstWord >> secondWord;
-                while (iss >> dept) {
-                    departmentMap[dept] = value;
-                }
-                received_client++;
-            }
-
-            cout << "Main server has received the department list from "
-                    "server "
-                    "A/B/C using UDP over port "
-                 << SERVER_PORT_UDP << endl;
-
-            // This map will store vectors of strings, grouped by their
-            // server number.
-            map<int, vector<string>> groupedDepartments;
-
-            // Group department names by their server number.
-            for (const auto &pair : departmentMap) {
-                groupedDepartments[pair.second].push_back(pair.first);
-            }
-
-            // Now print the groups in order.
-            for (const auto &group : groupedDepartments) {
-                // Print the server name once.
-                if (group.first == 0) {
-                    cout << "Server A: ";
-                } else if (group.first == 1) {
-                    cout << "Server B: ";
-                } else if (group.first == 2) {
-                    cout << "Server C: ";
-                }
-
-                // Print all departments for this server.
-                for (const auto &dept : group.second) {
-                    cout << dept << " ";
-                }
-                cout << endl;
-            }
-
-            /*
-            while (true) {
-                cout << "Enter Department Name: ";
-                string dept_input;
-                cin >> dept_input;
-
-                auto it = departmentMap.find(dept_input);
-                if (it != departmentMap.end()) {
-                    int clientNumber = it->second;
-                    switch (clientNumber) {
-                        case 0:
-                            sendto(udp_sockfd, dept_input.c_str(),
-                                   dept_input.size(), 0,
-                                   (struct sockaddr *)&backend_addr1,
-                                   sizeof(backend_addr1));
-                            cout << dept_input << " shows up in server A"
-                                 << endl;
-                            cout << "The Main Server has sent request for "
-                                 << dept_input
-                                 << " to server A using UDP over port "
-                                 << SERVER_PORT_UDP << endl;
-                            break;
-                        case 1:
-                            sendto(udp_sockfd, dept_input.c_str(),
-                                   dept_input.size(), 0,
-                                   (struct sockaddr *)&backend_addr2,
-                                   sizeof(backend_addr2));
-                            cout << dept_input << " shows up in server B"
-                                 << endl;
-                            cout << "The Main Server has sent request for "
-                                 << dept_input
-                                 << " to server B using UDP over port "
-                                 << SERVER_PORT_UDP << endl;
-                            break;
-                        case 2:
-                            sendto(udp_sockfd, dept_input.c_str(),
-                                   dept_input.size(), 0,
-                                   (struct sockaddr *)&backend_addr3,
-                                   sizeof(backend_addr3));
-                            cout << dept_input << " shows up in server C"
-                                 << endl;
-                            cout << "The Main Server has sent request for "
-                                 << dept_input
-                                 << " to server C using UDP over port "
-                                 << SERVER_PORT_UDP << endl;
-                            break;
-                        default:
-                            cout << dept_input
-                                 << " does not show up in Backend servers"
-                                 << endl;
-                    }
-                } else {
-                    cout << dept_input << "does not show up in Backend servers"
-                         << endl;
-                    continue;
-                }
-
-                char student_ID[1024];
-
-                int n = recvfrom(udp_sockfd, student_ID, sizeof(student_ID) - 1,
-                                 0, (struct sockaddr *)&udp_addr, &len);
-
-                string which_server;
-                switch (ntohs(udp_addr.sin_port)) {
-                    case 30675:
-                        which_server = "A";
-                        break;
-                    case 31675:
-                        which_server = "B";
-                        break;
-                    case 32675:
-                        which_server = "C";
-                        break;
-                    default:
-                        cerr << "Unknown client port" << endl;
-                        continue;
-                }
-                cout << "The Main server has received searching result(s) "
-                        "of "
-                     << dept_input << " from Backend server " << which_server
-                     << endl;
-
-                string str(student_ID);
-                int student_count = count(str.begin(), str.end(), ',') + 1;
-
-                cout << "There are " << student_count
-                     << " distinct students in " << dept_input << endl;
-
-                if (n > 0) {
-                    student_ID[n] = '\0';  // Null-terminate the string
-                    cout << "Their IDs are " << student_ID << endl;
-                }
-                cout << "-----Start a new query-----" << endl;
-            }
-            */
+    while (true) {
+        if (new_socket = accept(tcp_sockfd, (struct sockaddr *)&client_addr,
+                                &client_addr_len) < 0) {
+            cerr << "Accept failed" << endl;
+            return 0;
         }
     }
+
+    /*
+    while (true) {
+        cout << "Enter Department Name: ";
+        string dept_input;
+        cin >> dept_input;
+
+        auto it = departmentMap.find(dept_input);
+        if (it != departmentMap.end()) {
+            int clientNumber = it->second;
+            switch (clientNumber) {
+                case 0:
+                    sendto(udp_sockfd, dept_input.c_str(),
+                           dept_input.size(), 0,
+                           (struct sockaddr *)&backend_addr1,
+                           sizeof(backend_addr1));
+                    cout << dept_input << " shows up in server A"
+                         << endl;
+                    cout << "The Main Server has sent request for "
+                         << dept_input
+                         << " to server A using UDP over port "
+                         << SERVER_PORT_UDP << endl;
+                    break;
+                case 1:
+                    sendto(udp_sockfd, dept_input.c_str(),
+                           dept_input.size(), 0,
+                           (struct sockaddr *)&backend_addr2,
+                           sizeof(backend_addr2));
+                    cout << dept_input << " shows up in server B"
+                         << endl;
+                    cout << "The Main Server has sent request for "
+                         << dept_input
+                         << " to server B using UDP over port "
+                         << SERVER_PORT_UDP << endl;
+                    break;
+                case 2:
+                    sendto(udp_sockfd, dept_input.c_str(),
+                           dept_input.size(), 0,
+                           (struct sockaddr *)&backend_addr3,
+                           sizeof(backend_addr3));
+                    cout << dept_input << " shows up in server C"
+                         << endl;
+                    cout << "The Main Server has sent request for "
+                         << dept_input
+                         << " to server C using UDP over port "
+                         << SERVER_PORT_UDP << endl;
+                    break;
+                default:
+                    cout << dept_input
+                         << " does not show up in Backend servers"
+                         << endl;
+            }
+        } else {
+            cout << dept_input << "does not show up in Backend servers"
+                 << endl;
+            continue;
+        }
+
+        char student_ID[1024];
+
+        int n = recvfrom(udp_sockfd, student_ID, sizeof(student_ID) - 1,
+                         0, (struct sockaddr *)&udp_addr, &len);
+
+        string which_server;
+        switch (ntohs(udp_addr.sin_port)) {
+            case 30675:
+                which_server = "A";
+                break;
+            case 31675:
+                which_server = "B";
+                break;
+            case 32675:
+                which_server = "C";
+                break;
+            default:
+                cerr << "Unknown client port" << endl;
+                continue;
+        }
+        cout << "The Main server has received searching result(s) "
+                "of "
+             << dept_input << " from Backend server " << which_server
+             << endl;
+
+        string str(student_ID);
+        int student_count = count(str.begin(), str.end(), ',') + 1;
+
+        cout << "There are " << student_count
+             << " distinct students in " << dept_input << endl;
+
+        if (n > 0) {
+            student_ID[n] = '\0';  // Null-terminate the string
+            cout << "Their IDs are " << student_ID << endl;
+        }
+        cout << "-----Start a new query-----" << endl;
+    }
+    */
 
     // ! should I close it here
     // Close the TCP server socket before exiting
