@@ -16,35 +16,35 @@ const char *SERVER_IP = "127.0.0.1";
 const int SERVER_PORT = 45675;
 
 int main() {
-    // Create a socket for the client
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        cout << "Error creating socket" << endl;
-        return 1;
-    }
-
-    // Define the server address
-    struct sockaddr_in server_addr;
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(SERVER_PORT);
-    server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
-
-    // Connect to the server
-    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) <
-        0) {
-        cout << "Connection failed" << endl;
-        return 1;
-    }
-
-    // Retrieve and print the dynamic port number
-    struct sockaddr_in localAddress;
-    socklen_t addressLength = sizeof(localAddress);
-    getsockname(sockfd, (struct sockaddr *)&localAddress, &addressLength);
-
     cout << "Client is up and running" << endl;
 
     while (true) {
+        // Create a socket for the client
+        int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd < 0) {
+            cout << "Error creating socket" << endl;
+            return 1;
+        }
+
+        // Define the server address
+        struct sockaddr_in server_addr;
+        memset(&server_addr, 0, sizeof(server_addr));
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_port = htons(SERVER_PORT);
+        server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
+
+        // Connect to the server
+        if (connect(sockfd, (struct sockaddr *)&server_addr,
+                    sizeof(server_addr)) < 0) {
+            cout << "Connection failed" << endl;
+            return 1;
+        }
+
+        // Retrieve and print the dynamic port number
+        struct sockaddr_in localAddress;
+        socklen_t addressLength = sizeof(localAddress);
+        getsockname(sockfd, (struct sockaddr *)&localAddress, &addressLength);
+
         // Input from user
         string departmentName, studentID;
         cout << "Department name: ";
@@ -60,10 +60,19 @@ int main() {
         cout << "Client has sent" << departmentName << " and " << studentID
              << " to Main Server using TCP over port "
              << ntohs(localAddress.sin_port) << endl;
-    }
 
-    // Close the socket
-    close(sockfd);
+        // Receive data from server
+        char buffer[1024];
+        int n = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
+        if (n > 0) {
+            buffer[n] = '\0';  // Null-terminate the string
+            cout << "Client has received the result from Main Server: "
+                 << buffer << endl;
+        }
+
+        // Close the socket
+        close(sockfd);
+    }
 
     return 0;
 }

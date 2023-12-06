@@ -207,7 +207,9 @@ int main() {
         if (pid < 0) {
             cerr << "Failed to fork." << endl;
             close(client_sockfd);
-        } else if (pid == 0) {
+        }
+
+        if (pid == 0) {
             // Child process
             close(tcp_sockfd);
 
@@ -261,8 +263,8 @@ int main() {
                     cout << responsibleServerIndex << endl;
                 } else {
                     cerr << "Department not found." << endl;
-                    // send(client_sockfd, "Student record not found.",
-                    //      strlen("Student record not found."), 0);
+                    send(client_sockfd, "Student record not found.",
+                         strlen("Student record not found."), 0);
                 }
 
                 string student_info = departmentName + " " + studentID;
@@ -284,6 +286,8 @@ int main() {
                            sizeof(backend_addr3));
                 }
 
+                cout << "Message sent" << endl;
+
                 // Receive the response from Server A
                 int n = recvfrom(udp_sockfd, buffer, sizeof(buffer) - 1, 0,
                                  (struct sockaddr *)&udp_addr, &len);
@@ -298,31 +302,34 @@ int main() {
                 }
 
                 // Receive the response from Server A
-                n = recvfrom(udp_sockfd, buffer, sizeof(buffer) - 1, 0,
-                             (struct sockaddr *)&udp_addr, &len);
-                if (n < 0) {
-                    cerr << "Error receiving data from Server A" << endl;
-                } else {
-                    buffer[n] = '\0';  // Null-terminate the string
-                    string response(buffer);
 
-                    // Parse the response to extract average score and
-                    // percentage rank Assuming the response format is "Average
-                    // Score for Student ID [ID]: [Average], Percentage Rank in
-                    // Department: [Rank]%"
-                    size_t pos =
-                        response.find("Percentage Rank in Department: ");
-                    string averageScore = response.substr(0, pos);
-                    string percentageRank = response.substr(pos);
+                // int n = recvfrom(udp_sockfd, buffer, sizeof(buffer) - 1, 0,
+                //                  (struct sockaddr *)&udp_addr, &len);
+                // if (n < 0) {
+                //     cerr << "Error receiving data from Server A" << endl;
+                // } else {
+                //     buffer[n] = '\0';  // Null-terminate the string
+                //     string response(buffer);
 
-                    // Print the extracted information
-                    cout << averageScore << endl;
-                    cout << percentageRank << endl;
-                }
+                //     // Parse the response to extract average score and
+                //     // percentage rank Assuming the response format is
+                //     "Average
+                //     // Score for Student ID [ID]: [Average], Percentage Rank
+                //     in
+                //     // Department: [Rank]%"
+                //     size_t pos =
+                //         response.find("Percentage Rank in Department: ");
+                //     string averageScore = response.substr(0, pos);
+                //     string percentageRank = response.substr(pos);
+
+                //     // Print the extracted information
+                //     cout << averageScore << endl;
+                //     cout << percentageRank << endl;
+                // }
             }
-
-            close(client_sockfd);  // Close the client socket when done
-            return 0;              // Exit child process
+            close(client_sockfd);  // Close the client socket in the child
+                                   // process
+            exit(0);               // Exit the child process
         } else {
             // Parent process
             close(client_sockfd);  // Close the client socket in the parent
@@ -332,7 +339,5 @@ int main() {
 
     // ! should I close it here
     // Close the TCP server socket before exiting
-    close(tcp_sockfd);
-    close(udp_sockfd);
     return 0;
 }

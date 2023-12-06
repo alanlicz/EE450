@@ -162,8 +162,8 @@ int main() {
             string response = "Average Score for Student ID " +
                               to_string(studentID) + ": " + formattedAverage;
 
-            sendto(sockfd, response.c_str(), response.length(), 0,
-                   (struct sockaddr*)&server_addr, sizeof(server_addr));
+            // sendto(sockfd, response.c_str(), response.length(), 0,
+            //        (struct sockaddr*)&server_addr, sizeof(server_addr));
 
         } else {
             cerr << "StudentID" << studentID << " not found in department "
@@ -190,7 +190,9 @@ int main() {
             sendto(sockfd, response.c_str(), response.length(), 0,
                    (struct sockaddr*)&server_addr, sizeof(server_addr));
         } else {
-            // ... [Student record not found handling]
+            string response = "Student ID not found";
+            sendto(sockfd, response.c_str(), response.length(), 0,
+                   (struct sockaddr*)&server_addr, sizeof(server_addr));
         }
     }
 
