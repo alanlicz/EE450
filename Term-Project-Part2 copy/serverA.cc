@@ -5,6 +5,7 @@
 
 #include <cstring>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <set>
@@ -43,6 +44,9 @@ std::map<std::string, StudentRecord> load_and_store_data(
     const std::string& file_path);
 std::string extract_department_names(
     const std::map<std::string, StudentRecord>& student_records);
+double calculatePercentageRank(
+    const std::map<std::string, StudentRecord>& student_records,
+    const string& department, int targetStudentID);
 
 int main() {
     cout << SERVER_NAME << " is up and running using UDP on port "
@@ -111,41 +115,83 @@ int main() {
     cout << SERVER_NAME << " has sent a department list to Main Server" << endl;
 
     while (true) {
-        char message[1024];
+        char buffer[1024];
 
-        int n = recvfrom(sockfd, message, sizeof(message) - 1, 0,
+        int n = recvfrom(sockfd, buffer, sizeof(buffer) - 1, 0,
                          (struct sockaddr*)&from_addr, &from_len);
 
         if (n > 0) {
-            message[n] = '\0';  // Null-terminate the string
-            cout << SERVER_NAME << " has received a request for " << message
+            buffer[n] = '\0';  // Null-terminate the string
+            cout << SERVER_NAME << " has received a request for " << buffer
                  << endl;
         }
 
-        string data_to_send;
-        auto it = department_data.find(message);
-        if (it != department_data.end()) {
-            cout << SERVER_NAME << " found " << it->second.size()
-                 << " distinct students for " << message << ": ";
-            for (auto numIt = it->second.begin(); numIt != it->second.end();
-                 ++numIt) {
-                if (numIt != it->second.begin()) {
-                    data_to_send += ", ";
-                    cout << ", ";
+        buffer[n] = '\0';  // Null-terminate the string
+        string receivedMessage(buffer);
+
+        // Parse the received message to extract department name and student ID
+        string departmentName;
+        int studentID;
+        istringstream iss(receivedMessage);
+        if (!(iss >> departmentName >> studentID)) {
+            cerr << "Invalid message format." << endl;
+            continue;
+        }
+
+        // Process the message
+        string formattedAverage;
+        string key = departmentName + "_" + to_string(studentID);
+        auto it = student_data.find(key);
+        if (it != student_data.end()) {
+            const auto& scores = it->second.scores;
+            int sum = 0;
+            int count = 0;
+            for (int score : scores) {
+                if (score >= 0) {  // Assuming -1 indicates missing scores
+                    sum += score;
+                    count++;
                 }
-                data_to_send += to_string(*numIt);  // Convert numIt to string
-                cout << *numIt;
             }
-            data_to_send += "\n";
-            cout << endl;
-            sendto(sockfd, data_to_send.c_str(), data_to_send.size(), 0,
+            double average = count > 0 ? static_cast<double>(sum) / count : 0.0;
+
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(1) << average;
+            formattedAverage = oss.str();
+
+            // Now, use formattedAverage in your response
+            string response = "Average Score for Student ID " +
+                              to_string(studentID) + ": " + formattedAverage;
+
+            sendto(sockfd, response.c_str(), response.length(), 0,
+                   (struct sockaddr*)&server_addr, sizeof(server_addr));
+
+        } else {
+            cerr << "StudentID" << studentID << " not found in department "
+                 << departmentName << endl;
+            // Handle the case where the student record is not found
+            std::string response = "Student ID not found.";
+        }
+
+        if (it != student_data.end()) {
+            const auto& scores = it->second.scores;
+            // ... [Average calculation code]
+
+            double percentageRank = calculatePercentageRank(
+                student_data, departmentName, studentID);
+
+            std::ostringstream responseStream;
+            responseStream << std::fixed << std::setprecision(1);
+            responseStream << "Average Score for Student ID " << studentID
+                           << ": " << formattedAverage << ", ";
+            responseStream << "Percentage Rank in Department: "
+                           << percentageRank << "%";
+
+            string response = responseStream.str();
+            sendto(sockfd, response.c_str(), response.length(), 0,
                    (struct sockaddr*)&server_addr, sizeof(server_addr));
         } else {
-            cout << SERVER_NAME << " did not find the department " << message
-                 << endl;
+            // ... [Student record not found handling]
         }
-
-        cout << SERVER_NAME << " has sent the results to Main Server" << endl;
     }
 
     close(sockfd);
@@ -209,4 +255,23 @@ std::string extract_department_names(
     }
 
     return department_names;
+}
+
+// New function to calculate the percentage rank
+double calculatePercentageRank(
+    const std::map<std::string, StudentRecord>& student_records,
+    const string& department, int targetStudentID) {
+    int count = 0;
+    int studentsBelowOrEqual = 0;
+    for (const auto& record : student_records) {
+        if (record.second.department == department) {
+            count++;
+            if (record.second.studentID <= targetStudentID) {
+                studentsBelowOrEqual++;
+            }
+        }
+    }
+    return count > 0
+               ? static_cast<double>(studentsBelowOrEqual + 1) / count * 100.0
+               : 0.0;
 }

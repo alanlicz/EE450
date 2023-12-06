@@ -37,21 +37,30 @@ int main() {
         return 1;
     }
 
-    cout << "Connected to server" << endl;
+    // Retrieve and print the dynamic port number
+    struct sockaddr_in localAddress;
+    socklen_t addressLength = sizeof(localAddress);
+    getsockname(sockfd, (struct sockaddr *)&localAddress, &addressLength);
 
-    // Input from user
-    string departmentName, studentID;
-    cout << "Department name: ";
-    getline(cin, departmentName);
-    cout << "Student ID: ";
-    getline(cin, studentID);
+    cout << "Client is up and running" << endl;
 
-    // Send data to server
-    string message =
-        "Department: " + departmentName + ", Student ID: " + studentID;
-    send(sockfd, message.c_str(), message.size(), 0);
+    while (true) {
+        // Input from user
+        string departmentName, studentID;
+        cout << "Department name: ";
+        getline(cin, departmentName);
+        cout << "Student ID: ";
+        getline(cin, studentID);
 
-    cout << "Data sent to server" << endl;
+        // Send data to server
+        string message =
+            "Department: " + departmentName + ", Student ID: " + studentID;
+        send(sockfd, message.c_str(), message.size(), 0);
+
+        cout << "Client has sent" << departmentName << " and " << studentID
+             << " to Main Server using TCP over port "
+             << ntohs(localAddress.sin_port) << endl;
+    }
 
     // Close the socket
     close(sockfd);

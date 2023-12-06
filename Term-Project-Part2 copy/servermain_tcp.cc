@@ -224,10 +224,101 @@ int main() {
             } else {
                 // Null-terminate the received data to make it a valid C-string
                 client_message[bytes_read] = '\0';
+                string receivedMessage(client_message);
 
                 // Print the received message
                 cout << "Received message from client: " << client_message
                      << endl;
+
+                // Extract department name and student ID
+                size_t deptPos = receivedMessage.find("Department: ");
+                size_t idPos = receivedMessage.find(", Student ID: ");
+                string departmentName, studentID;
+
+                if (deptPos != string::npos && idPos != string::npos) {
+                    // ! Important
+                    deptPos += strlen(
+                        "Department: ");  // Adjust position to the start of the
+                                          // actual department name
+                    departmentName =
+                        receivedMessage.substr(deptPos, idPos - deptPos);
+                    idPos += strlen(
+                        ", Student ID: ");  // Adjust position to the start of
+                                            // the actual student ID
+                    studentID = receivedMessage.substr(idPos);
+                    cout << departmentName << " " << studentID << endl;
+                } else {
+                    cerr << "Invalid message format." << endl;
+                    // Handle invalid format...
+                }
+
+                auto it = departmentMap.find(departmentName);
+                int responsibleServerIndex = -1;
+
+                if (it != departmentMap.end()) {
+                    // Return the server index (0, 1, 2)
+                    responsibleServerIndex = it->second;
+                    cout << responsibleServerIndex << endl;
+                } else {
+                    cerr << "Department not found." << endl;
+                    // send(client_sockfd, "Student record not found.",
+                    //      strlen("Student record not found."), 0);
+                }
+
+                string student_info = departmentName + " " + studentID;
+
+                if (responsibleServerIndex == 0) {
+                    sendto(udp_sockfd, student_info.c_str(),
+                           student_info.length(), 0,
+                           (struct sockaddr *)&backend_addr1,
+                           sizeof(backend_addr1));
+                } else if (responsibleServerIndex == 1) {
+                    sendto(udp_sockfd, student_info.c_str(),
+                           student_info.length(), 0,
+                           (struct sockaddr *)&backend_addr2,
+                           sizeof(backend_addr2));
+                } else if (responsibleServerIndex == 2) {
+                    sendto(udp_sockfd, student_info.c_str(),
+                           student_info.length(), 0,
+                           (struct sockaddr *)&backend_addr3,
+                           sizeof(backend_addr3));
+                }
+
+                // Receive the response from Server A
+                int n = recvfrom(udp_sockfd, buffer, sizeof(buffer) - 1, 0,
+                                 (struct sockaddr *)&udp_addr, &len);
+                if (n < 0) {
+                    cerr << "Error receiving data from Server A" << endl;
+                } else {
+                    buffer[n] = '\0';  // Null-terminate the string
+                    string response(buffer);
+
+                    // Print the response
+                    cout << "Received from Server A: " << response << endl;
+                }
+
+                // Receive the response from Server A
+                n = recvfrom(udp_sockfd, buffer, sizeof(buffer) - 1, 0,
+                             (struct sockaddr *)&udp_addr, &len);
+                if (n < 0) {
+                    cerr << "Error receiving data from Server A" << endl;
+                } else {
+                    buffer[n] = '\0';  // Null-terminate the string
+                    string response(buffer);
+
+                    // Parse the response to extract average score and
+                    // percentage rank Assuming the response format is "Average
+                    // Score for Student ID [ID]: [Average], Percentage Rank in
+                    // Department: [Rank]%"
+                    size_t pos =
+                        response.find("Percentage Rank in Department: ");
+                    string averageScore = response.substr(0, pos);
+                    string percentageRank = response.substr(pos);
+
+                    // Print the extracted information
+                    cout << averageScore << endl;
+                    cout << percentageRank << endl;
+                }
             }
 
             close(client_sockfd);  // Close the client socket when done
