@@ -108,8 +108,8 @@ int main() {
     }
 
     while (true) {
-        if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
-                                 (socklen_t *)&addrlen)) < 0) {
+        if (new_socket = accept(server_fd, (struct sockaddr *)&address,
+                                 (socklen_t *)&addrlen) < 0) {
             cerr << "Accept failed." << endl;
             return 0;
         }
